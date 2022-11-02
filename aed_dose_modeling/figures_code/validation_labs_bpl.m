@@ -2,8 +2,6 @@
 
 close all;clear;
 
-load('MAR_032122.mat')
-
 % Get which patients
 cohort_info = readtable('HUP_implant_dates.xlsx');
 ptIDs = cohort_info.ptID;
@@ -15,6 +13,7 @@ weights = cohort_info.weight_kg;
 % load AED parameters and
 aed_params = readtable('AED_metadata.xlsx');
 aed_params.medication = arrayfun(@lower,aed_params.medication);
+aed_ref_ranges = readtable('AED_metadata.xlsx','Sheet','refRanges');
 
 % LOAD DATA
 load([pwd '/DATA/all_labs.mat'],'all_labs');
@@ -22,7 +21,6 @@ load('MAR_032122.mat');
 
 
 %%
-
 predictions = table();
 for i = 1:length(ptIDs)
     
@@ -36,7 +34,7 @@ for i = 1:length(ptIDs)
     for n = 1:height(EMU_labs)
         med_ind = [];
         for r = 1:length(med_names)
-            if contains(EMU_labs.generic_name(n),(med_names{r}))
+            if strcmp(EMU_labs.generic_name(n),(med_names{r}))
                 med_ind = r;
             end
         end
@@ -64,18 +62,22 @@ end
 
 %% remove NaN's - likely duplicates 
 predictions(isnan(predictions.RESULTS),:)=[];
+% remove values where predictions were 0 - level is likely due to
+% pre-existing level and not from EMU ADMIN
+predictions((predictions.predicted_level == 0),:)=[];
+
 
 % unit conversion... gotta do it manually: convert everything to mg/L
 all_units = unique(predictions.UNIT); 
 %  {'mg/L' } and {'ug/mL'} are equal
-%  {'ng/mL'}
+%  {'ng/mL'} is 1e-3 of {'mg/L' }
 ng_inds = strcmp(predictions.UNIT,'ng/mL');
 predictions.RESULTS(ng_inds) = predictions.RESULTS(ng_inds) * 1e-3;
 predictions.UNIT(ng_inds)= {'mg/L'};
 
 % manual: messed up 
-predictions.generic_name(strcmp(predictions.generic_name,{'n-desmethylclobazam'})) = {'clobazam'};
-predictions(strcmp(predictions.UNIT,{'%'}),:) = [];
+ predictions.generic_name(strcmp(predictions.generic_name,{'n-desmethylclobazam'})) = {'clobazam'};
+% predictions(strcmp(predictions.UNIT,{'%'}),:) = [];
 
 
 all_med_names = unique(predictions.generic_name);
@@ -191,3 +193,51 @@ plot(x,pred,'k','Linewidth',2); hold off;
 title(['all AED lab results, R = ' num2str(r) ', p =  ' num2str(p) ]); %xlim([0 60])
 xlabel('measured lab result (mg/L)');ylabel('model predicted BPL (mg/L)')
 legend(all_med_names);
+
+%% bland aldman plot
+
+aed_ref_ranges.Drug = arrayfun(@lower,aed_ref_ranges.Drug);
+
+% convert units of ref ranges to mg/L 
+%  {'mg/L' } and {'ug/mL'} are equal and {'ng/mL'} is 1e-3 of {'mg/L' }
+ng_inds = strcmp(aed_ref_ranges.units,'ng/mL');
+aed_ref_ranges.ref_range_min(ng_inds) = aed_ref_ranges.ref_range_min(ng_inds) * 1e-3;
+aed_ref_ranges.ref_range_max(ng_inds) = aed_ref_ranges.ref_range_max(ng_inds) * 1e-3;
+aed_ref_ranges.units(ng_inds)= {'mg/L'};
+
+
+all_measured_z = zeros(height(predictions),1);
+all_predicted_z = zeros(height(predictions),1);
+
+for i =1:height(predictions)
+    med_ind = find(strcmp(predictions.generic_name(i),aed_ref_ranges.Drug));
+    range = aed_ref_ranges.ref_range_max(med_ind) -  aed_ref_ranges.ref_range_min(med_ind);
+    ref_mean = mean([aed_ref_ranges.ref_range_max(med_ind) aed_ref_ranges.ref_range_min(med_ind)]);
+    
+    all_measured_z(i) = (predictions.RESULTS(i) - ref_mean) ./ (range);
+    all_predicted_z(i) = (predictions.predicted_level(i) - ref_mean) ./ (range);
+end
+
+figure;
+pred_names =unique(predictions.generic_name);
+colors = turbo(length(pred_names));
+for i = 1:length(pred_names)
+    inds = contains(predictions.generic_name,pred_names(i));
+    plot(mean([all_measured_z(inds),all_predicted_z(inds)],2),all_measured_z(inds)-all_predicted_z(inds),'.','Color',colors(i,:),'Markersize',15); hold on;
+end
+
+legend(pred_names)
+xlabel('mean(measured score, predicted score)');
+ylabel('diff(measured score, predicted score)');
+yline(0,'linewidth',3)
+yline(-1,'linewidth',1)
+yline(1,'linewidth',1)
+
+
+
+ylim([-3 3])
+
+
+
+
+
