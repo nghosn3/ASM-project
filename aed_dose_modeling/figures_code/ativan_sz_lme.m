@@ -1,5 +1,5 @@
 %% run a linear mixed model for seizures requiring ativan admin vs not - (results associated with figure 3)
-
+clear;
 % Get which patients have AED data, load the data
 load('MAR_032122.mat')
 cohort_info = readtable('HUP_implant_dates.xlsx');
@@ -107,7 +107,6 @@ b=bar(data); hold on;
 plot(.9,all_seizures.preictal_aed_load(ativan_sz_inds),'.k','markersize',10);
 plot(1.9,all_seizures.preictal_aed_load(other_sz_inds),'.k','markersize',10);
 
-
 er = errorbar([1 2],data,stds,'LineWidth',2);    
 er.Color = [0 0 0];                            
 er.LineStyle = 'none'; 
@@ -125,6 +124,10 @@ x(1:length(all_seizures.preictal_aed_load(ativan_sz_inds)),1) = all_seizures.pre
 x(1:length(all_seizures.preictal_aed_load(other_sz_inds)),2) = all_seizures.preictal_aed_load(other_sz_inds)';
 
 [p,tbl,stats] = kruskalwallis(x,{'ativan','nonativan'},'on');
+
+figure;
+boxplot(x,{'ativan','nonativan'})
+
 %multcompare(stats)
 
 
