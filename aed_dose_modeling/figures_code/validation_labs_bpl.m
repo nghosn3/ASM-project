@@ -222,16 +222,22 @@ figure;
 pred_names =unique(predictions.generic_name);
 colors = turbo(length(pred_names));
 for i = 1:length(pred_names)
-    inds = contains(predictions.generic_name,pred_names(i));
-    plot(mean([all_measured_z(inds),all_predicted_z(inds)],2),all_measured_z(inds)-all_predicted_z(inds),'.','Color',colors(i,:),'Markersize',15); hold on;
+    inds = find(contains(predictions.generic_name,pred_names(i)));
+    jitter = rand(length(inds),1)./5;
+    plot(zeros(length(inds),1)+i+jitter-mean(jitter),all_measured_z(inds)-all_predicted_z(inds),'.','Color',colors(i,:),'Markersize',25); hold on;
 end
 
+[B,I]=sort(predictions.generic_name);
+boxplot(all_measured_z(I)-all_predicted_z(I),B)
+
+
 legend(pred_names)
-xlabel('mean(measured score, predicted score)');
-ylabel('diff(measured score, predicted score)');
+ylabel('measured - predicted (reference ranges)');
 yline(0,'linewidth',3)
 yline(-1,'linewidth',1)
 yline(1,'linewidth',1)
+xlim([0 14]);
+xticks(1:length(pred_names)); xticklabels(pred_names);
 
 
 
