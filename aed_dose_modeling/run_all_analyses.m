@@ -22,11 +22,10 @@ run aed_percent_decrease_fig.m
  
  % run model testing if baseline seizure frequency and ASM taper affect length of stay in the epilepsy monitoring unit:
  
- % 1) using decrease in overall ASM load as predictor:
+% using decrease in overall ASM load as predictor:
  run ASM_taper_load_LOS.m
  
- % 2) using the taper of the top 4 ASMs as predictors in model: 
- run all_ASMs_LOSmodel_load.m
- 
+
+%% run predictive models
  % run ASM model and null model for seizure prediction
  run bootstrapped_log_reg_allAEDs.m
