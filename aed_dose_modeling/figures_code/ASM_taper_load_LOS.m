@@ -52,9 +52,23 @@ for ipt=1:length(ptIDs)
     t0 = min(all_dstarts); %earliest time in min a drug was administered
     t1 = t0 + (24*60);
     t2 = t1 + (24*60);
+    t3 = t2 + (24*60);
+    t4 = t3 + (24*60);
     
     day1_decrease = (nanmean(drug_sum(t0:t1))-nanmean(drug_sum(t1:t2)))./ (nanmean(drug_sum(t0:t1)));
-    %day2_decrease = (nanmean(drug_sum(t0:t1))-nanmean(drug_sum(t2:t3)))./ (nanmean(drug_sum(t0:t1)));
+    
+    % some patients have short EMU stays
+    try
+    day2_decrease = (nanmean(drug_sum(t0:t1))-nanmean(drug_sum(t2:t3)))./ (nanmean(drug_sum(t0:t1)));
+    catch
+        day2_decrease =NaN;
+    end 
+    
+    try
+    day3_decrease = (nanmean(drug_sum(t0:t1))-nanmean(drug_sum(t3:t4)))./ (nanmean(drug_sum(t0:t1)));
+    catch
+        day3_decrease =NaN;
+    end 
     
     aed_decrease(1,ipt) = day1_decrease;
     
@@ -109,32 +123,12 @@ for i = 1:length(ptIDs)
 end
 
 
-% get time to first seizure (in EMU time for all)
-% time_to_first_seizure = zeros(length(ptIDs),1);
-% for i = 1:length(ptIDs)
-%     ptID = ['HUP' num2str(ptIDs(i))];
-%     offsets = ieeg_offset{2,i};
-%     ieeg_offset_datasets = ieeg_offset{1,i};
-%     [seizure_times] = convert_sz_to_emu_time(offsets,ieeg_offset_datasets,ptID);
-%     time_to_first_seizure(i)=seizure_times(1); %the first seizure
-% end
-
-%% run model for severity 
+%% run model for length of stay
 tbl = table();
 tbl.asm_decrease = aed_decrease(1,:)'; %decrease from day 1 to 2
 tbl.baseline_sz_freq = (sz_freqs);%./max(sz_freqs); % normalize like other feature
-tbl1 = tbl;
-tbl1.has_conv = double(has_conv);
-%tbl.time_to_first_seizure = time_to_first_seizure;
-
-% find -inf and negative values and make them zero for no decrease
-zero_inds = tbl1.asm_decrease == -inf | tbl1.asm_decrease <0;
-tbl1.asm_decrease(zero_inds)=0;
 
 
-mdl_severity = fitglm(tbl1,'distribution','binomial')
-
-%% run model for length of stay
 tbl2 = tbl;
 tbl2.length_stay = hours(cohort_info.Explant_Date - cohort_info.Implant_Date);
 zero_inds = tbl2.asm_decrease == -Inf ; % | tbl2.asm_decrease < 0
@@ -172,27 +166,12 @@ data = nan(2,len);
 data(1,1:length( decrease_had_conv))= decrease_had_conv;
 data(2,1:length( decrease_no_conv))= decrease_no_conv; 
 
-boxplot(data',[{'no ativan sz'},{'had ativan sz'}]); axis square;
+boxplot(data',[{'had ativan sz'},{'no ativan sz'}]); axis square;
 [p,h,stats]=ranksum(decrease_had_conv,decrease_no_conv)
 save_path='/Users/ninaghosn/Documents/Litt_Lab/projects/Pioneer/AED-taper-networks/results-figures/';
 %print([save_path 'fig04_los_conv.eps'],'-depsc2','-painters', '-tiff', '-r300', '-f')
 
 
-% coefs = mdl_severity.Coefficients.Estimate(2:end);
-% SEs = mdl_severity.Coefficients.SE(2:end);
-% ORs = exp(coefs);
-% CIs = exp([coefs+(1.96*SEs) coefs-(1.96*SEs)]);
-% coef_names=mdl_severity.CoefficientNames(2:end);
-% inds = length(ORs):-1:1;
-% 
-% neg = ORs-CIs(:,2);
-% pos = CIs(:,1)-ORs;
-% errorbar(ORs,inds,neg,pos,'.k','horizontal','linewidth',2); hold on;
-% plot((ORs),inds,'.r','markersize',20); axis square;
-% xline(1,'--r','linewidth',1.5)
-% yticks(1:length(ORs))
-% yticklabels(coef_names(inds))
-% xlabel('Odds Ratio'); 
 
 function out = func2(x)
 if length(x)>2
