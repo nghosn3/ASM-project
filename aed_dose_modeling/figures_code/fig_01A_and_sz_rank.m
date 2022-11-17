@@ -104,26 +104,49 @@ for i=1:length(ptIDs)
 end
 figure()
 %[out,pval_binom_alt,successes] = plot_orders(aed_loads(logical(tapered)),preictal_aed_load(logical(tapered)));
-subplot(1,2,1)
-inds= ~cellfun(@isempty,preictal_aed_load); 
-[out,pval_binom_alt,successes,successes_alt] = plot_orders(aed_loads(inds),preictal_aed_load(inds));
-axis square;
+% subplot(1,2,1)
+% inds= ~cellfun(@isempty,preictal_aed_load); 
+% [out,pval_binom_alt,successes,successes_alt] = plot_orders(aed_loads(inds),preictal_aed_load(inds));
+% axis square;
 
-subplot(1,2,2)
 median_loads = cellfun(@median,aed_loads(inds));
 sz_median_loads = cellfun(@median,preictal_aed_load(inds));
-boxplot([median_loads' sz_median_loads'],[1 2]);hold on;
-plot(0,0);
-plot(1,median(median_loads),'.');
-plot(2,mean(sz_median_loads),'.');
-axis square;
-xticklabels([{'median ASM load'},{'median pre-ictal ASM load'}]);
-legend(['binomial test pval = ' num2str(pval_binom_alt)],['median ASM load = ' num2str(median(median_loads))],['median sz load = ' num2str(median(sz_median_loads))])
+
+%% paired plot 
+data = [median_loads' sz_median_loads'];
+xlim([0 1]);ylim([0 1])
+
+pcolor = [0, 0.4470, 0.7410];
+ncolor = [0.6350, 0.0780, 0.1840];
+ecolor = [0.9290, 0.6940, 0.1250];
+
+% Define positive and negative
+pos_diff = data(:,2) > data(:,1);
+neg_diff = data(:,1) > data(:,2);
+equal_diff = data(:,1) == data(:,2);
+
+pp = plot(data(pos_diff,1),data(pos_diff,2),'o','markeredgecolor',pcolor,'linewidth',2,...
+    'MarkerFaceColor',pcolor);
+hold on
+np = plot(data(neg_diff,1),data(neg_diff,2),'^','markeredgecolor',...
+    ncolor,'MarkerFaceColor',ncolor,'linewidth',2);
+ep = plot(data(equal_diff,1),data(equal_diff,2),'s','markeredgecolor',...
+    ecolor,'markerfacecolor',ecolor,'linewidth',2);
+
+all_min = min([ylim,xlim]);
+all_max = max([xlim,ylim]);
+plot([all_min all_max],[all_min all_max],'k--','linewidth',2)
+
+legtext1 = ('pre-ictal ASM load > median ASM load');
+legtext2 = ('pre-ictal ASM load < median ASM load');
+legend([pp;np;ep],{legtext1,legtext2},'fontsize',15)
+
+xlabel('Median ASM load')
+ylabel('Median pre-ictal ASM load')
+
+set(gca,'fontsize',15)
 
 
-figure;axis square;
-sz_means = horzcat(preictal_aed_load{:});
-null_means = vertcat(null_aed_loads{:});
-histogram(sz_means,'normalization','pdf');hold on;
-histogram(null_means,'normalization','pdf')
-legend({'pre-ictal AED load','null distribution'})
+
+
+
