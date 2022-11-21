@@ -18,7 +18,7 @@ load('MAR_032122.mat')
 all_seizures =table(); % add ptID, seizure ID, preictal AED load, and binary yes/no for ativan admin w/in 1hr
 
 %% find the seizures followed by ativan administration
-aed_decrease = zeros(3,length(ptIDs));
+aed_decrease = zeros(1,length(ptIDs));
 
 all_times = [];
 seizure_offsets = [];
@@ -49,28 +49,29 @@ for ipt=1:length(ptIDs)
     drug_sum(drug_sum==0) =NaN; %not include all zeros in average, and in histogram
     
     % med curves are sampled at one point per minute
-    t0 = min(all_dstarts); %earliest time in min a drug was administered
-    t1 = t0 + (24*60);
-    t2 = t1 + (24*60);
-    t3 = t2 + (24*60);
-    t4 = t3 + (24*60);
+    day_int = 24*60;
+    t0 = day_int; %min(all_dstarts); %earliest time in min a drug was administered
+    t1 = t0 + day_int;
+    t2 = t1 + day_int;
+    t3 = t2 + day_int;
+    t4 = t3 + day_int;
     
-    day1_decrease = (nanmean(drug_sum(t0:t1))-nanmean(drug_sum(t1:t2)))./ (nanmean(drug_sum(t0:t1)));
+    day1_decrease = (median(drug_sum(t0:t1))-median(drug_sum(t1:t2)))./ (median(drug_sum(t0:t1)));
     
     % some patients have short EMU stays
     try
-    day2_decrease = (nanmean(drug_sum(t0:t1))-nanmean(drug_sum(t2:t3)))./ (nanmean(drug_sum(t0:t1)));
+    day2_decrease = (median(drug_sum(t0:t1))-median(drug_sum(t2:t3)))./ (median(drug_sum(t0:t1)));
     catch
         day2_decrease =NaN;
     end 
     
     try
-    day3_decrease = (nanmean(drug_sum(t0:t1))-nanmean(drug_sum(t3:t4)))./ (nanmean(drug_sum(t0:t1)));
+    day3_decrease = (median(drug_sum(t0:t1))-median(drug_sum(t3:t4)))./ (median(drug_sum(t0:t1)));
     catch
         day3_decrease =NaN;
     end 
     
-    aed_decrease(1,ipt) = day1_decrease;
+    aed_decrease(ipt) = day1_decrease;
     
     % get seizure times
     [seizure_times] = convert_sz_to_emu_time(offsets,ieeg_offset_datasets,ptID); % seizure times in hours of EMU stay
@@ -125,7 +126,7 @@ end
 
 %% run model for length of stay
 tbl = table();
-tbl.asm_decrease = aed_decrease(1,:)'; %decrease from day 1 to 2
+tbl.asm_decrease = aed_decrease'; %decrease from day 1 to 2
 tbl.baseline_sz_freq = (sz_freqs);%./max(sz_freqs); % normalize like other feature
 
 
@@ -134,7 +135,7 @@ tbl2.length_stay = hours(cohort_info.Explant_Date - cohort_info.Implant_Date);
 zero_inds = tbl2.asm_decrease == -Inf ; % | tbl2.asm_decrease < 0
 tbl2(zero_inds,:)=[];
 %outliers = find(isoutlier(tbl2.baseline_sz_freq,'quartiles'));
-%tbl2(39,:)=[];
+%tbl2(42,:)=[]; patient with baseline sz freq of 3000
 mdl_LOS = fitlm(tbl2)
 
 %% plot stuff 
@@ -145,7 +146,7 @@ x2 = tbl2.baseline_sz_freq;
 y= tbl2.length_stay;
 plot3(x1,x2,y,'.k','markersize',15); axis square; hold on;
  
-ylim([0 300])
+%ylim([0 300])
 title('linear model for length of stay')
 xlabel('ASM decrease');ylabel('baseline seizure frequency');zlabel('length of stay (hrs)');
 
@@ -169,7 +170,7 @@ data(2,1:length( decrease_no_conv))= decrease_no_conv;
 boxplot(data',[{'had ativan sz'},{'no ativan sz'}]); axis square;
 [p,h,stats]=ranksum(decrease_had_conv,decrease_no_conv)
 save_path='/Users/ninaghosn/Documents/Litt_Lab/projects/Pioneer/AED-taper-networks/results-figures/';
-%print([save_path 'fig04_los_conv.eps'],'-depsc2','-painters', '-tiff', '-r300', '-f')
+print([save_path 'fig04_los_conv.eps'],'-depsc2','-painters', '-tiff', '-r300', '-f')
 
 
 
