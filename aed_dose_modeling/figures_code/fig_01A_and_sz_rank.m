@@ -103,14 +103,15 @@ for i=1:length(ptIDs)
     
 end
 figure()
-%[out,pval_binom_alt,successes] = plot_orders(aed_loads(logical(tapered)),preictal_aed_load(logical(tapered)));
-% subplot(1,2,1)
-% inds= ~cellfun(@isempty,preictal_aed_load); 
-% [out,pval_binom_alt,successes,successes_alt] = plot_orders(aed_loads(inds),preictal_aed_load(inds));
-% axis square;
+subplot(1,2,1)
+inds= ~cellfun(@isempty,preictal_aed_load); 
+[out,pval_binom_alt,successes,successes_alt] = plot_orders(aed_loads(inds),preictal_aed_load(inds));
+axis square;
 
 median_loads = cellfun(@median,aed_loads(inds));
 sz_median_loads = cellfun(@median,preictal_aed_load(inds));
+
+[p,h,stats]= signrank(median_loads,sz_median_loads)
 
 %% paired plot 
 data = [median_loads' sz_median_loads'];
