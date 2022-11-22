@@ -10,7 +10,7 @@ asm_load(inf_inds)=[];
 asm_dose(inf_inds)=[];
 
 [RHO,PVAL] = corr([asm_load asm_dose])
-scatter(asm_load,asm_dose); hold on;
+plot(asm_load,asm_dose,'.','markersize',20); hold on;
 yvals = asm_dose;
 xvals = asm_load;
 
