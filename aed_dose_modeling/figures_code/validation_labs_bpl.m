@@ -151,7 +151,7 @@ colors = turbo(length(all_med_names));
 for i = 1:length(all_med_names)
     
     inds = contains(predictions.generic_name,all_med_names(i));
-    plot(log10(predictions.RESULTS(inds)),log10(predictions.predicted_level(inds)),'.','markersize',20,'Color',colors(i,:));
+    plot(log10(predictions.RESULTS(inds)+1),log10(predictions.predicted_level(inds)+1),'.','markersize',20,'Color',colors(i,:));
     axis square; hold on;
 end
 

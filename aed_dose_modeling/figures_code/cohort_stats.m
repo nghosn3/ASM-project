@@ -1,4 +1,4 @@
-%% get cohort information - for figure 2 and supplement
+%% get cohort information - for figure 1 and supplement
 clear;
 
 % loadthe aed metadata

@@ -40,10 +40,10 @@ for ipt=1:length(ptIDs)
     [seizure_times] = convert_sz_to_emu_time(offsets,ieeg_offset_datasets,ptID); % seizure times in hours of EMU stay
     
     % remove clustered seizures <2hrs apart
-    cluster_diff = diff(seizure_times(:,1));
-    noncluster_inds = [1; cluster_diff>1];
-    seizure_times=seizure_times(logical(noncluster_inds),:);
-    
+%     cluster_diff = diff(seizure_times(:,1));
+%     noncluster_inds = [1; cluster_diff>1];
+%     seizure_times=seizure_times(logical(noncluster_inds),:);
+%     
     end_ind = start_ind + length(seizure_times);
     
     % convert seizure times to indices, so to minutes
@@ -123,7 +123,8 @@ x = nan(r,c);
 x(1:length(all_seizures.preictal_aed_load(ativan_sz_inds)),1) = all_seizures.preictal_aed_load(ativan_sz_inds);
 x(1:length(all_seizures.preictal_aed_load(other_sz_inds)),2) = all_seizures.preictal_aed_load(other_sz_inds)';
 
-[p,tbl,stats] = kruskalwallis(x,{'ativan','nonativan'},'on');
+[p,tbl,stats] = ranksum(all_seizures.preictal_aed_load(ativan_sz_inds),all_seizures.preictal_aed_load(other_sz_inds));
+
 
 figure;
 boxplot(x,{'ativan','nonativan'})

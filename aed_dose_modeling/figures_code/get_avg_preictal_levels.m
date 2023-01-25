@@ -1,6 +1,6 @@
 function [preictal_aed_load,null_aed_loads] = get_avg_preictal_levels(ptIDs, all_meds, all_dose_curves, all_tHr, ieeg_offset,max_dur,emu_dur)
 
-sz_cluster =0;
+sz_cluster = 0;
 
 %seizures within a pt
 all_aed_mean =zeros(1,length(ptIDs));
@@ -37,8 +37,8 @@ for ipt =1:length(ptIDs)
     % convert seizure times to indices, so to minutes
     seizure_inds = round(seizure_times(:,1) *60);
     %remove seizure inds that are greater than emu recording
-    time =emu_dur(ipt)*60;%number of minutes of emu stay
-    seizure_inds(seizure_inds>time)=[];
+%     time =emu_dur(ipt)*60;%number of minutes of emu stay
+%     seizure_inds(seizure_inds>time)=[];
     
     % here we want to prune the used seizure inds to pick the first seizure from a cluster
     if sz_cluster ==1 && ~isempty(seizure_inds)

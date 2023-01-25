@@ -111,7 +111,7 @@ histogram(aed_decrease*100,8);title('overall ASM dose decrease'); axis square; x
 xline(mean(aed_decrease*100)); legend([{['mean = ' num2str(mean(aed_decrease*100))]},{['std = ' num2str(std(aed_decrease*100))]}])
 
 save_path='/Users/ninaghosn/Documents/Litt_Lab/projects/Pioneer/AED-taper-networks/results-figures/';
-print([save_path 'aed_%decrease_.eps'],'-depsc2','-painters', '-tiff', '-r300', '-f')
+%print([save_path 'aed_%decrease_.eps'],'-depsc2','-painters', '-tiff', '-r300', '-f')
 
 
 function out = func2(x)
